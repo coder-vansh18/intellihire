@@ -5,7 +5,7 @@ const StudentResults = () => {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    fetch("${API_URL}/api/test/results")
+    fetch(`${API_URL}/api/test/results`)
       .then(res => res.json())
       .then(data => setResults(data))
       .catch(err => console.error(err));

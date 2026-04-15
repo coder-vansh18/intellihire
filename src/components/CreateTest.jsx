@@ -48,7 +48,7 @@ const CreateTest = () => {
   // 🚀 SUBMIT TEST
   const handleSubmit = async () => {
   try {
-    const res = await fetch("${API_URL}/api/test", {
+    const res = await fetch(`${API_URL}/api/test`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

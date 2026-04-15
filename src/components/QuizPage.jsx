@@ -72,7 +72,7 @@ const QuizPage = (props) => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   try {
-    const res = await fetch("${API_URL}/api/test", {
+    const res = await fetch(`${API_URL}/api/test`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

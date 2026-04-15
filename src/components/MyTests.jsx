@@ -7,7 +7,7 @@ const MyTests = () => {
 
   // ✅ Fetch tests from backend
   const fetchTests = async () => {
-    const res = await fetch("${API_URL}/api/tests");
+    const res = await fetch(`${API_URL}/api/tests`);
     const data = await res.json();
     setTests(data);
   };
