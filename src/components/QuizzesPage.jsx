@@ -135,7 +135,7 @@ const QuizzesPage = () => {
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/tests");
+        const res = await axios.get("${API_URL}/api/tests");
         setTests(res.data);
       } catch (err) {
         console.error("Error fetching tests:", err);

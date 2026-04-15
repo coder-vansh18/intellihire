@@ -6,7 +6,7 @@ const MyTests = () => {
 
   // ✅ Fetch tests from backend
   const fetchTests = async () => {
-    const res = await fetch("http://localhost:5000/api/tests");
+    const res = await fetch("${API_URL}/api/tests");
     const data = await res.json();
     setTests(data);
   };
@@ -18,7 +18,7 @@ const MyTests = () => {
   // ✅ DELETE from DB
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/tests/${id}`, {
+      await fetch(`${API_URL}/api/test/${id}`, {
         method: "DELETE",
       });
 

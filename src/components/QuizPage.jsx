@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useLocation, useRoute } from "wouter";
+import { API_URL } from "../config";
 
 const QuizPage = (props) => {
   const [, params] = useRoute("/quiz/:id");
@@ -17,7 +18,7 @@ const QuizPage = (props) => {
   useEffect(() => {
     const fetchTest = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/tests/${testId}`);
+        const res = await axios.get(`${API_URL}/api/tests/${testId}`);
         setQuestions(res.data.questions);
 
         // dynamic timer (1 question = 1 min)
@@ -71,7 +72,7 @@ const QuizPage = (props) => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   try {
-    const res = await fetch("http://localhost:5000/api/results", {
+    const res = await fetch("${API_URL}/api/test", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

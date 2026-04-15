@@ -12,7 +12,7 @@ const DashboardPage = () => {
     setUser(storedUser);
 
     if (storedUser?._id) {
-      fetch(`http://localhost:5000/api/results/student/${storedUser._id}`)
+      fetch(`${API_URL}/api/results/student/${storedUser._id}`)
         .then(res => res.json())
         .then(data => setResults(data));
         
