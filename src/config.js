@@ -1,1 +1,1 @@
-export const API_URL = "https://your-backend-url.onrender.com";
+export const API_URL = "https://intellihire-8hpj.onrender.com";

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaChartLine, FaBook, FaTrophy, FaCalendar } from 'react-icons/fa';
 import { Link } from 'wouter';
+import { API_URL } from '../config';
 
 const DashboardPage = () => {
 

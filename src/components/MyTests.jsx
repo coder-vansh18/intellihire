@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
+import { API_URL } from "../config";
 
 const MyTests = () => {
   const [tests, setTests] = useState([]);

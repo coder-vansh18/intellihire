@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_URL } from "../config";
 
 const StudentResults = () => {
   const [results, setResults] = useState([]);
