@@ -19,3 +19,4 @@ class QuizSubmitPayload(BaseModel):
     tab_switches: Optional[int] = None # Requirement 1 support
     fullscreen_exit_count: Optional[int] = 0
     paste_count: Optional[int] = 0
+    disqualified: Optional[bool] = False

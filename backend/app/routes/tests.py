@@ -1,15 +1,15 @@
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select, or_
 from app.db.session import get_session
-from app.models import Test, Question, User, Batch, UserBatchLink, TestAssignment
+from app.models import Test, Question, User, Batch, UserBatchLink, TestAssignment, Result, QuizProgress
 from app.schemas import TestCreate, TestOut, QuestionOut, TestAssignPayload, BatchCreatePayload
 from app.core.security import get_current_user
 
 router = APIRouter(prefix="/api", tags=["Tests"])
 
-def format_test_response(test: Test) -> TestOut:
+def format_test_response(test: Test, db: Optional[Session] = None) -> TestOut:
     questions_out = [
         QuestionOut(
             id=str(q.id),
@@ -19,6 +19,20 @@ def format_test_response(test: Test) -> TestOut:
         )
         for q in test.questions
     ]
+
+    assignments_out = []
+    if db:
+        assignments = db.exec(select(TestAssignment).where(TestAssignment.test_id == test.id)).all()
+        for a in assignments:
+            assignments_out.append({
+                "id": str(a.id),
+                "branch": a.branch,
+                "year": a.year,
+                "section": a.section,
+                "user_id": str(a.user_id) if a.user_id else None,
+                "batch_id": str(a.batch_id) if a.batch_id else None
+            })
+
     return TestOut(
         id=str(test.id),
         _id=str(test.id),
@@ -26,7 +40,8 @@ def format_test_response(test: Test) -> TestOut:
         duration_minutes=test.duration_minutes,
         is_public=test.is_public,
         questions=questions_out,
-        createdAt=test.created_at.isoformat()
+        createdAt=test.created_at.isoformat(),
+        assignments=assignments_out
     )
 
 @router.post("/tests", response_model=dict, status_code=201)
@@ -63,24 +78,30 @@ def create_test(
     
     return {
         "message": "Test Created Successfully",
-        "test": format_test_response(test)
+        "test": format_test_response(test, db)
     }
 
-@router.get("/tests", response_model=List[TestOut])
-def get_all_tests(
+@router.get("/my-tests", response_model=List[TestOut])
+def get_my_tests_management(
     db: Session = Depends(get_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
-    # 1. Company / Professor / Admin Roles: View all created/managed tests
-    if current_user and current_user.role in ["company", "professor", "admin"]:
-        tests = db.exec(
-            select(Test)
-            .where(or_(Test.created_by_id == current_user.id, Test.created_by_id == None, Test.is_public == True))
-            .order_by(Test.created_at.desc())
-        ).all()
-        return [format_test_response(t) for t in tests]
-    
-    # 2. Student Role: View Public Practice Tests + Assigned Tests (User, Batch, Branch, Year, Section)
+    """Dedicated endpoint for professors and managers to view all created assessments"""
+    tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+    return [format_test_response(t, db) for t in tests]
+
+@router.get("/tests", response_model=List[TestOut])
+def get_all_tests(
+    mode: Optional[str] = Query(None),
+    db: Session = Depends(get_session),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    # If explicitly requested in management mode, return all tests
+    if mode == "manage":
+        tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+        return [format_test_response(t, db) for t in tests]
+
+    # 1. Student Role: View Public Practice Tests + Tests specifically assigned to Student's Branch/Year/Section/Batch
     if current_user and current_user.role == "student":
         student_batch_ids = db.exec(
             select(UserBatchLink.batch_id).where(UserBatchLink.user_id == current_user.id)
@@ -111,11 +132,11 @@ def get_all_tests(
             query = select(Test).where(Test.is_public == True).order_by(Test.created_at.desc())
         
         tests = db.exec(query).all()
-        return [format_test_response(t) for t in tests]
+        return [format_test_response(t, db) for t in tests]
 
-    # 3. Unauthenticated Guests / Fallback: Public Practice Tests Only
-    tests = db.exec(select(Test).where(Test.is_public == True).order_by(Test.created_at.desc())).all()
-    return [format_test_response(t) for t in tests]
+    # 2. Professors / Companies / Admins / General Management: View all created assessments
+    tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+    return [format_test_response(t, db) for t in tests]
 
 @router.get("/tests/{id}", response_model=TestOut)
 def get_test(id: str, db: Session = Depends(get_session)):
@@ -128,7 +149,7 @@ def get_test(id: str, db: Session = Depends(get_session)):
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
-    return format_test_response(test)
+    return format_test_response(test, db)
 
 @router.delete("/tests/{id}")
 @router.delete("/test/{id}")
@@ -142,6 +163,27 @@ def delete_test(id: str, db: Session = Depends(get_session)):
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
+    # 1. Clean up associated results
+    results = db.exec(select(Result).where(Result.test_id == test.id)).all()
+    for r in results:
+        db.delete(r)
+
+    # 2. Clean up associated quiz_progress sessions
+    progress_records = db.exec(select(QuizProgress).where(QuizProgress.test_id == test.id)).all()
+    for p in progress_records:
+        db.delete(p)
+
+    # 3. Clean up associated test assignments
+    assignments = db.exec(select(TestAssignment).where(TestAssignment.test_id == test.id)).all()
+    for a in assignments:
+        db.delete(a)
+
+    # 4. Clean up questions
+    questions = db.exec(select(Question).where(Question.test_id == test.id)).all()
+    for q in questions:
+        db.delete(q)
+
+    # 5. Delete the test itself
     db.delete(test)
     db.commit()
     return {"message": "Test deleted successfully"}

@@ -1,5 +1,6 @@
+import uuid
 from sqlalchemy import inspect, text
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import SQLModel, create_engine, Session, select
 from app.core.config import settings
 
 connect_args = {}
@@ -11,6 +12,8 @@ engine = create_engine(
     echo=False, 
     connect_args=connect_args
 )
+
+GUEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000000")
 
 def auto_migrate_sqlite():
     if not settings.DATABASE_URL.startswith("sqlite"):
@@ -49,6 +52,24 @@ def auto_migrate_sqlite():
                 if col_name not in assign_cols:
                     conn.execute(text(f"ALTER TABLE test_assignments ADD COLUMN {col_name} {col_type}"))
 
+def ensure_guest_user():
+    from app.models.user import User
+    with Session(engine) as session:
+        guest = session.get(User, GUEST_USER_ID)
+        if not guest:
+            guest = User(
+                id=GUEST_USER_ID,
+                name="Guest Student",
+                email="guest@intellihire.ai",
+                password_hash="guest_no_login",
+                role="student"
+            )
+            session.add(guest)
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
+
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
     if settings.DATABASE_URL.startswith("sqlite"):
@@ -56,6 +77,10 @@ def create_db_and_tables():
             auto_migrate_sqlite()
         except Exception as e:
             print(f"Auto-migration note: {e}")
+    try:
+        ensure_guest_user()
+    except Exception as e:
+        print(f"Guest user provisioning note: {e}")
 
 def get_session():
     with Session(engine) as session:

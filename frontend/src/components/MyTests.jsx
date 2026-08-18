@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { API_URL } from "../config";
-import { FaUserPlus, FaBuilding, FaCalendarAlt, FaLayerGroup, FaGlobe, FaLock, FaTrashAlt, FaEye } from "react-icons/fa";
+import { FaUserPlus, FaBuilding, FaCalendarAlt, FaLayerGroup, FaGlobe, FaLock, FaTrashAlt, FaEye, FaSyncAlt } from "react-icons/fa";
 
 const MyTests = () => {
   const [tests, setTests] = useState([]);
@@ -18,7 +18,7 @@ const MyTests = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/tests`, {
+      const res = await fetch(`${API_URL}/api/my-tests`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       const data = await res.json();
@@ -38,14 +38,20 @@ const MyTests = () => {
     if (!window.confirm("Are you sure you want to delete this test?")) return;
     try {
       const token = localStorage.getItem("token");
-      await fetch(`${API_URL}/api/tests/${id}`, {
+      const res = await fetch(`${API_URL}/api/tests/${id}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      setTests((prev) => prev.filter((test) => (test._id || test.id) !== id));
+      if (res.ok) {
+        setTests((prev) => prev.filter((test) => (test._id || test.id) !== id));
+      } else {
+        const data = await res.json();
+        alert(data.detail || "Failed to delete test");
+      }
     } catch (err) {
       console.error(err);
+      alert("Error deleting test");
     }
   };
 
@@ -97,9 +103,16 @@ const MyTests = () => {
           <p className="text-sm text-indigo-100 mt-1">Manage, assign, and track branch-wise & section-wise tests</p>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchTests}
+            className="p-2.5 bg-white/20 hover:bg-white/30 text-white rounded-full transition shadow"
+            title="Refresh Tests"
+          >
+            <FaSyncAlt className={loading ? "animate-spin" : ""} />
+          </button>
           <Link to="/create-test">
-            <button className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-full shadow transition text-sm">
+            <button className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-full shadow transition text-sm">
               + Create New Test
             </button>
           </Link>
@@ -141,11 +154,25 @@ const MyTests = () => {
                       </span>
                     </div>
 
-                    <div className="space-y-1 text-sm text-gray-600 mb-4">
+                    <div className="space-y-1.5 text-sm text-gray-600 mb-4">
                       <p>📋 Questions: <span className="font-semibold text-gray-800">{test.questions ? test.questions.length : 0}</span></p>
                       <p>⏱ Duration: <span className="font-semibold text-gray-800">{test.duration_minutes || 60} mins</span></p>
                       <p className="text-xs text-gray-400">Created: {test.createdAt ? new Date(test.createdAt).toLocaleDateString() : "N/A"}</p>
                     </div>
+
+                    {/* Active Assignment Badges */}
+                    {test.assignments && test.assignments.length > 0 && (
+                      <div className="mb-4 bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-100">
+                        <p className="text-[11px] font-bold text-indigo-900 mb-1">Assigned Targets:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {test.assignments.map((a, aIdx) => (
+                            <span key={aIdx} className="text-[10px] bg-white border border-indigo-200 text-indigo-700 font-semibold px-2 py-0.5 rounded">
+                              {[a.branch, a.year, a.section].filter(Boolean).join(" • ") || "Assigned"}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-4 border-t flex flex-wrap gap-2 justify-between items-center">
