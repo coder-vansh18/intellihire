@@ -1,6 +1,6 @@
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from app.db.session import get_session
 from app.models import Result, Test, User
@@ -16,23 +16,54 @@ def format_result(r: Result, db: Session) -> ResultOut:
         id=str(r.id),
         userId=str(r.user_id),
         userName=user.name if user else "Student",
+        userEmail=user.email if user else "",
+        userBranch=user.branch if user else None,
+        userYear=user.year if user else None,
+        userSection=user.section if user else None,
+        userRollNumber=user.roll_number if user else None,
         testId={"_id": str(r.test_id), "title": test.title if test else "Test"},
         score=r.score,
         total=r.total,
+        duration_seconds=r.duration_seconds or 0,
         createdAt=r.created_at.isoformat(),
         tab_switch_count=r.tab_switch_count,
-        tab_switches=r.tab_switch_count, # Requirement 1 metric
+        tab_switches=r.tab_switch_count,
         fullscreen_exit_count=r.fullscreen_exit_count,
         paste_count=r.paste_count,
         disqualified=r.disqualified,
-        metrics=r.metrics
+        metrics=r.metrics or []
     )
 
 @router.get("/test/results", response_model=List[ResultOut])
 @router.get("/results", response_model=List[ResultOut])
-def get_all_results(db: Session = Depends(get_session)):
-    results = db.exec(select(Result).order_by(Result.created_at.desc())).all()
-    return [format_result(r, db) for r in results]
+def get_all_results(
+    test_id: Optional[str] = Query(None),
+    branch: Optional[str] = Query(None),
+    year: Optional[str] = Query(None),
+    section: Optional[str] = Query(None),
+    db: Session = Depends(get_session)
+):
+    query = select(Result).order_by(Result.created_at.desc())
+
+    if test_id:
+        try:
+            t_uuid = uuid.UUID(test_id)
+            query = query.where(Result.test_id == t_uuid)
+        except ValueError:
+            pass
+
+    results = db.exec(query).all()
+    formatted = [format_result(r, db) for r in results]
+
+    # Filter in-memory if branch/year/section query params passed
+    if branch:
+        formatted = [r for r in formatted if (r.userBranch or "").lower() == branch.lower()]
+    if year:
+        formatted = [r for r in formatted if (r.userYear or "").lower() == year.lower()]
+    if section:
+        formatted = [r for r in formatted if (r.userSection or "").lower() == section.lower()]
+
+    return formatted
 
 @router.get("/results/student/{student_id}", response_model=List[ResultOut])
 def get_student_results(student_id: str, db: Session = Depends(get_session)):
@@ -68,6 +99,11 @@ def get_result_analytics(id: str, db: Session = Depends(get_session)):
     return {
         "result_id": str(result.id),
         "student_name": user.name if user else "Student",
+        "student_email": user.email if user else "",
+        "student_branch": user.branch if user else None,
+        "student_year": user.year if user else None,
+        "student_section": user.section if user else None,
+        "student_roll_number": user.roll_number if user else None,
         "test_title": test.title if test else "Test",
         "score": result.score,
         "total": result.total,

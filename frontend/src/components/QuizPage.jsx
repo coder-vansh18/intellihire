@@ -18,7 +18,22 @@ const QuizPage = () => {
   const [disqualified, setDisqualified] = useState(false);
 
   const answersRef = useRef(answers);
-  useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  const calculateLocalScore = useCallback(() => {
+    let score = 0;
+    questions.forEach((q, i) => {
+      const ansIdx = answersRef.current[i];
+      if (ansIdx !== undefined && q.correct !== undefined) {
+        if (Number(ansIdx) === Number(q.correct)) {
+          score++;
+        }
+      }
+    });
+    return score;
+  }, [questions]);
 
   // Submit Quiz Callback
   const submitQuiz = useCallback(async (proctorData = {}) => {
@@ -63,7 +78,7 @@ const QuizPage = () => {
       document.exitFullscreen().catch(() => {});
     }
     setShowResult(true);
-  }, [testId]);
+  }, [testId, calculateLocalScore]);
 
   // Requirement 1: Custom Proctoring Hook with 3-Warning Limit
   const {
@@ -83,10 +98,10 @@ const QuizPage = () => {
         const res = await axios.post(
           `${API_URL}/api/tests/${testId}/start`,
           {},
-          { headers: { Authorization: token ? `Bearer ${token}` : "" } }
+          { headers: token ? { Authorization: `Bearer ${token}` } : {} }
         );
 
-        setQuestions(res.data.questions);
+        setQuestions(res.data.questions || []);
         setTimeLeft(res.data.remaining_seconds || res.data.duration_minutes * 60);
         if (res.data.answers) {
           setAnswers(res.data.answers);
@@ -122,7 +137,7 @@ const QuizPage = () => {
           tab_switch_count: tabSwitches,
           tab_switches: tabSwitches,
         },
-        { headers: { Authorization: token ? `Bearer ${token}` : "" } }
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
     } catch (err) {
       console.warn("Autosave heartbeat failed", err);
@@ -149,12 +164,21 @@ const QuizPage = () => {
   }, [timeLeft, questions, showResult, submitQuiz, tabSwitches]);
 
   const handleAnswer = (index) => {
-    const qId = questions[current]?.id;
-    setAnswers({
-      ...answers,
+    const q = questions[current];
+    const qId = q?.id;
+    const selectedOptionText = q?.options?.[index];
+
+    setAnswers((prev) => ({
+      ...prev,
       [current]: index,
-      ...(qId ? { [qId]: index } : {})
-    });
+      ...(qId
+        ? {
+            [qId]: index,
+            [`${qId}_text`]: selectedOptionText,
+            [`${current}_text`]: selectedOptionText
+          }
+        : {})
+    }));
   };
 
   const nextQuestion = () => {
@@ -173,20 +197,10 @@ const QuizPage = () => {
     setMarked({ ...marked, [current]: !marked[current] });
   };
 
-  const calculateLocalScore = () => {
-    let score = 0;
-    questions.forEach((q, i) => {
-      if (q.correct !== undefined && Number(answers[i]) === Number(q.correct)) {
-        score++;
-      }
-    });
-    return score;
-  };
-
   if (!questions.length) return <p className="p-10 text-white font-semibold">Loading assessment...</p>;
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary p-6 gap-6 select-none">
+    <div className="flex min-h-screen bg-gradient-to-br from-primary to-secondary p-6 gap-6 select-none font-inter">
       
       {/* Strict Proctor Warning Modal (Requirement 1) */}
       {showWarningModal && !showResult && (

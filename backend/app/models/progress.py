@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List, Dict, Any, TYPE_CHECKING
+from typing import List, Dict, Any, Optional, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship, JSON, Column
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ class QuizProgress(SQLModel, table=True):
     __tablename__ = "quiz_progress"
     
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="users.id", index=True, nullable=False)
+    user_id: Optional[uuid.UUID] = Field(default=None, foreign_key="users.id", index=True, nullable=True)
     test_id: uuid.UUID = Field(foreign_key="tests.id", index=True, nullable=False)
     
     started_at: datetime = Field(default_factory=datetime.utcnow)
@@ -26,5 +26,5 @@ class QuizProgress(SQLModel, table=True):
     fullscreen_exit_count: int = Field(default=0, nullable=False)
     paste_count: int = Field(default=0, nullable=False)
 
-    user: "User" = Relationship(back_populates="progress")
+    user: Optional["User"] = Relationship(back_populates="progress")
     test: "Test" = Relationship(back_populates="progress_sessions")

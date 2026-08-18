@@ -22,6 +22,6 @@ class Test(SQLModel, table=True):
 
     creator: Optional["User"] = Relationship(back_populates="created_tests")
     questions: List["Question"] = Relationship(back_populates="test", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
-    results: List["Result"] = Relationship(back_populates="test")
-    progress_sessions: List["QuizProgress"] = Relationship(back_populates="test")
+    results: List["Result"] = Relationship(back_populates="test", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    progress_sessions: List["QuizProgress"] = Relationship(back_populates="test", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     assignments: List["TestAssignment"] = Relationship(back_populates="test", sa_relationship_kwargs={"cascade": "all, delete-orphan"})

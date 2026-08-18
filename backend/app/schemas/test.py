@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
 class QuestionCreate(BaseModel):
@@ -26,6 +26,7 @@ class TestOut(BaseModel):
     is_public: bool
     questions: List[QuestionOut]
     createdAt: str
+    assignments: Optional[List[Dict[str, Any]]] = []
 
 class TestAssignPayload(BaseModel):
     user_id: Optional[str] = None # Individual assignment
