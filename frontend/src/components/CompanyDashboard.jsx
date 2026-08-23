@@ -40,10 +40,18 @@ const CompanyDashboard = () => {
             <>
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 py-1.5 px-3 rounded-full text-slate-800 font-semibold text-sm transition"
+                className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-primary focus:outline-none transition"
+                title={user.name || "Profile"}
               >
-                <FaUserCircle className="text-lg text-primary" />
-                <span>{user.name}</span>
+                <img
+                  src="/assets/avatar.png"
+                  alt="Profile Avatar"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary shadow-sm hover:scale-105 transition duration-150"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://api.dicebear.com/7.x/bottts/svg?seed=user";
+                  }}
+                />
               </button>
 
               {showMenu && (

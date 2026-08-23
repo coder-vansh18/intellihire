@@ -154,9 +154,15 @@ const ProfilePage = () => {
         {/* Profile Header Summary Card */}
         <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 bg-primary text-white flex items-center justify-center rounded-full text-2xl font-bold shadow-md">
-              {getInitials(profile.name)}
-            </div>
+            <img
+              src="/assets/avatar.png"
+              alt="Profile Avatar"
+              className="w-16 h-16 rounded-full object-cover border-2 border-primary shadow-md"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://api.dicebear.com/7.x/bottts/svg?seed=user";
+              }}
+            />
             <div>
               <h2 className="text-xl font-bold text-gray-900">{profile.name || "Student Name"}</h2>
               <p className="text-sm text-gray-500">{profile.email}</p>

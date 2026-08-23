@@ -271,11 +271,29 @@ const CreateTest = () => {
             <h1 className="text-2xl font-bold text-gray-900">Create & Assign Assessment</h1>
             <p className="text-sm text-gray-500">Upload enterprise test templates with auto-extracted title & duration</p>
           </div>
-          <Link to="/company-dashboard">
-            <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full shadow text-sm font-semibold transition">
-              Back to Dashboard
-            </button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/company-dashboard">
+              <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full shadow text-sm font-semibold transition">
+                Dashboard
+              </button>
+            </Link>
+            <Link to="/profile">
+              <button 
+                className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-primary focus:outline-none transition"
+                title="Profile"
+              >
+                <img
+                  src="/assets/avatar.png"
+                  alt="Profile Avatar"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary shadow-sm hover:scale-105 transition duration-150"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://api.dicebear.com/7.x/bottts/svg?seed=user";
+                  }}
+                />
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* 1. Basic Details */}
