@@ -118,7 +118,23 @@ const MyTests = () => {
           </Link>
           <Link to="/company-dashboard">
             <button className="bg-white text-primary font-semibold px-4 py-2 rounded-full shadow hover:shadow-lg transition text-sm">
-              Back to Dashboard
+              Dashboard
+            </button>
+          </Link>
+          <Link to="/profile">
+            <button 
+              className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-white focus:outline-none transition"
+              title="Profile"
+            >
+              <img
+                src="/assets/avatar.png"
+                alt="Profile Avatar"
+                className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:scale-105 transition duration-150"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://api.dicebear.com/7.x/bottts/svg?seed=user";
+                }}
+              />
             </button>
           </Link>
         </div>

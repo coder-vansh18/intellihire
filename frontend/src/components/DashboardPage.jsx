@@ -95,12 +95,25 @@ const DashboardPage = () => {
 
         {user && (
           <div className="flex items-center gap-4">
-            <span className="font-semibold text-primary">
-              👤 {user.name}
-            </span>
+            <Link to="/profile">
+              <button 
+                className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-primary focus:outline-none transition"
+                title={user.name || "Profile"}
+              >
+                <img
+                  src="/assets/avatar.png"
+                  alt="Profile Avatar"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary shadow-sm hover:scale-105 transition duration-150"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://api.dicebear.com/7.x/bottts/svg?seed=user";
+                  }}
+                />
+              </button>
+            </Link>
             <button
               onClick={handleLogout}
-              className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-full"
+              className="bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold px-4 py-2 rounded-full hover:opacity-95 transition"
             >
               Logout
             </button>

@@ -197,6 +197,22 @@ const StudentResults = () => {
                 + Create Assessment
               </button>
             </Link>
+            <Link to="/profile">
+              <button 
+                className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-primary focus:outline-none transition"
+                title="Profile"
+              >
+                <img
+                  src="/assets/avatar.png"
+                  alt="Profile Avatar"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary shadow-sm hover:scale-105 transition duration-150"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://api.dicebear.com/7.x/bottts/svg?seed=user";
+                  }}
+                />
+              </button>
+            </Link>
           </div>
         </div>
       </div>

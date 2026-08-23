@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlay, FaFilter } from 'react-icons/fa';
+import { FaPlay, FaFilter, FaUser, FaLaptop } from 'react-icons/fa';
 import { Link } from 'wouter';
 import axios from 'axios';
 import { API_URL } from "../config";
@@ -8,14 +8,25 @@ const QuizzesPage = () => {
   const [filter, setFilter] = useState('all');
   const [user, setUser] = useState(null);
   const [tests, setTests] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Load user
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser && storedUser !== "undefined") {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error(err);
+      }
     }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  };
 
   // Fetch tests with Authorization header
   useEffect(() => {
@@ -38,23 +49,70 @@ const QuizzesPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary to-secondary text-gray-800 font-inter">
 
       {/* Navbar */}
-      <nav className="flex justify-between items-center p-4 bg-white bg-opacity-90 shadow-md sticky top-0 z-10">
+      <nav className="flex justify-between items-center p-4 bg-white bg-opacity-90 shadow-md sticky top-0 z-20">
         <div className="text-2xl font-bold text-primary">
           <Link to="/">IntelliHire</Link>
         </div>
 
         <ul className="flex space-x-8 list-none">
           <li><Link to="/" className="hover:text-primary">Home</Link></li>
-          <li><Link to="/quizzes" className="hover:text-primary">Quizzes</Link></li>
+          <li><Link to="/quizzes" className="hover:text-primary font-bold text-primary">Quizzes</Link></li>
           <li><Link to="/placements" className="hover:text-primary">Placements</Link></li>
           <li><Link to="/resources" className="hover:text-primary">Resources</Link></li>
         </ul>
 
         {user ? (
-          <span className="font-semibold text-primary">👤 {user.name}</span>
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDropdownOpen(!dropdownOpen);
+              }}
+              className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-primary focus:outline-none transition"
+              title={user.name || "Profile"}
+            >
+              <img
+                src="/assets/avatar.png"
+                alt="Profile Avatar"
+                className="w-10 h-10 rounded-full object-cover border-2 border-primary shadow-sm hover:scale-105 transition duration-150"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://api.dicebear.com/7.x/bottts/svg?seed=user";
+                }}
+              />
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden py-1 z-50">
+                <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
+                  <p className="text-xs text-gray-500 font-medium">Logged in as</p>
+                  <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
+                </div>
+
+                <Link to="/profile">
+                  <div className="px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <FaUser className="text-gray-400 text-xs" /> Profile
+                  </div>
+                </Link>
+
+                <Link to={user.role === "company" || user.role === "professor" ? "/company-dashboard" : "/dashboard"}>
+                  <div className="px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm font-medium cursor-pointer flex items-center gap-2">
+                    <FaLaptop className="text-gray-400 text-xs" /> Dashboard
+                  </div>
+                </Link>
+
+                <div
+                  onClick={handleLogout}
+                  className="px-4 py-2 hover:bg-red-50 text-red-600 text-sm font-semibold cursor-pointer border-t border-gray-100"
+                >
+                  Logout
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           <Link to="/login">
-            <button className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-full">
+            <button className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-full font-semibold text-sm">
               Login / Signup
             </button>
           </Link>
@@ -103,11 +161,10 @@ const QuizzesPage = () => {
                   </div>
 
                   <Link to={`/quiz/${tId}`}>
-                    <button className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-2.5 rounded-full flex items-center gap-2 mx-auto font-semibold shadow hover:opacity-95 transition">
-                      <FaPlay /> Start Test
+                    <button className="w-full bg-gradient-to-r from-primary to-secondary text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition">
+                      <FaPlay className="text-xs" /> Start Test
                     </button>
                   </Link>
-
                 </div>
               );
             })
@@ -116,11 +173,6 @@ const QuizzesPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white p-8 text-center">
-        <p>© 2026 IntelliHire. All rights reserved.</p>
-        <Link to="/" className="text-primary">Back to Home</Link>
-      </footer>
     </div>
   );
 };
