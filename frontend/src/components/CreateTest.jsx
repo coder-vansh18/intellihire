@@ -31,6 +31,7 @@ const CreateTest = () => {
 
   // Target Assignment States
   const [isPublic, setIsPublic] = useState(false);
+  const [expiresAt, setExpiresAt] = useState("");
   const [targetBranch, setTargetBranch] = useState("");
   const [targetYear, setTargetYear] = useState("");
   const [targetSection, setTargetSection] = useState("");
@@ -174,8 +175,8 @@ const CreateTest = () => {
           };
         }).filter((q) => q.question && q.options.length >= 2);
 
-        // Auto-fill Title and Duration if detected
-        if (parsedTitle) {
+        // Only auto-fill Title if user has not already typed a custom title
+        if (parsedTitle && !title.trim()) {
           setTitle(parsedTitle);
         }
         if (parsedDuration) {
@@ -225,6 +226,7 @@ const CreateTest = () => {
           title,
           duration_minutes: Number(durationMinutes) || 30,
           is_public: isPublic,
+          expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
           questions
         })
       });
@@ -309,7 +311,7 @@ const CreateTest = () => {
             </label>
             <input
               type="text"
-              placeholder="e.g. DS_FSD_Test-2"
+              placeholder="Enter assessment title (e.g. Full Stack Engineering Test)"
               className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-primary outline-none text-gray-800 font-medium"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -332,6 +334,24 @@ const CreateTest = () => {
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <FaCalendarAlt className="text-primary text-xs" /> Assessment Expiry Date & Time (Deadline)
+              </span>
+              <span className="text-xs text-gray-400 font-normal">Optional</span>
+            </label>
+            <input
+              type="datetime-local"
+              className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-primary outline-none text-gray-800 font-medium"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Students will not be able to attempt or submit this test after the specified deadline.
+            </p>
           </div>
         </div>
 

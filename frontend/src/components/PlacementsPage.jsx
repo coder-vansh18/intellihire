@@ -68,11 +68,11 @@ const PlacementsPage = () => {
       {/* Navbar */}
       <nav className="flex justify-between items-center p-4 bg-white bg-opacity-90 shadow-md sticky top-0 z-20">
         <div className="text-2xl font-bold text-primary">
-          <Link to="/">IntelliHire</Link>
+          <Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"}>IntelliHire</Link>
         </div>
 
         <ul className="flex space-x-8 list-none">
-          <li><Link to="/" className="hover:text-primary">Home</Link></li>
+          <li><Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"} className="hover:text-primary">Home</Link></li>
           <li><Link to="/quizzes" className="hover:text-primary">Quizzes</Link></li>
           <li><Link to="/placements" className="hover:text-primary font-bold text-primary">Placements</Link></li>
           <li><Link to="/resources" className="hover:text-primary">Resources</Link></li>

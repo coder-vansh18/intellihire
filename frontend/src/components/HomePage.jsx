@@ -17,7 +17,11 @@ const HomePage = () => {
     const storedUser = localStorage.getItem("user");
     if (storedUser && storedUser !== "undefined") {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        if (parsed && (parsed.role === "company" || parsed.role === "professor")) {
+          window.location.replace("/company-dashboard");
+        }
       } catch (err) {
         console.error("Invalid user data:", err);
         localStorage.removeItem("user");
