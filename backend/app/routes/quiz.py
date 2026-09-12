@@ -26,6 +26,13 @@ def start_quiz(
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
 
+    # Check if assessment deadline has expired
+    if test.expires_at and datetime.utcnow() > test.expires_at:
+        raise HTTPException(
+            status_code=400,
+            detail=f"This assessment expired on {test.expires_at.strftime('%b %d, %Y at %I:%M %p UTC')} and is no longer accepting submissions."
+        )
+
     user_id = current_user.id if current_user else GUEST_USER_ID
 
     existing_progress = db.exec(

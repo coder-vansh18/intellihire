@@ -16,7 +16,14 @@ class TestCreate(BaseModel):
     title: str
     duration_minutes: Optional[int] = 60
     is_public: Optional[bool] = False
+    expires_at: Optional[str] = None # Expiry Date & Time ISO or string
     questions: List[QuestionCreate]
+
+class TestUpdatePayload(BaseModel):
+    title: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    is_public: Optional[bool] = None
+    expires_at: Optional[str] = None # Update or clear expiry (pass null/empty to clear)
 
 class TestOut(BaseModel):
     id: str
@@ -24,6 +31,11 @@ class TestOut(BaseModel):
     title: str
     duration_minutes: int
     is_public: bool
+    expires_at: Optional[str] = None
+    is_expired: bool = False
+    is_completed: bool = False
+    result: Optional[Dict[str, Any]] = None
+    qa_alerts_count: Optional[int] = 0
     questions: List[QuestionOut]
     createdAt: str
     assignments: Optional[List[Dict[str, Any]]] = []

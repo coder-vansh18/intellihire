@@ -83,11 +83,11 @@ const DashboardPage = () => {
       {/* Navbar */}
       <nav className="flex justify-between items-center p-4 bg-white bg-opacity-90 shadow-md sticky top-0 z-10">
         <div className="text-2xl font-bold text-primary">
-          <Link to="/">IntelliHire</Link>
+          <Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"}>IntelliHire</Link>
         </div>
 
         <ul className="flex space-x-8 list-none">
-          <li><Link to="/">Home</Link></li>
+          <li><Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"}>Home</Link></li>
           <li><Link to="/quizzes">Quizzes</Link></li>
           <li><Link to="/placements">Placements</Link></li>
           <li><Link to="/resources">Resources</Link></li>
