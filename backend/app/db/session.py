@@ -97,6 +97,14 @@ def ensure_default_accounts():
             super_admin.password_hash = hash_password("super123")
             session.add(super_admin)
 
+        if not settings.SEED_DEMO_DATA:
+            try:
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                print(f"Super admin provisioning note: {e}")
+            return
+
         # 2. Organization 1: SKIT College (domain: skit.ac.in)
         skit_org = session.get(Organization, SKIT_ORG_ID)
         if not skit_org:
