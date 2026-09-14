@@ -185,6 +185,29 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  const handleClearDemoData = async () => {
+    if (!window.confirm("⚠️ ARE YOU SURE? This will permanently wipe all demo organizations, tests, and mock users from the database, leaving only your Super Admin account.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/super-admin/clear-demo-data`, {
+        method: "POST",
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || "Database cleared successfully! 🧹", "success");
+        fetchData();
+      } else {
+        showToast(data.detail || "Failed to clear database", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error communicating with server", "error");
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -292,12 +315,22 @@ const SuperAdminDashboard = () => {
             />
           </div>
 
-          <button
-            onClick={() => setShowCreateOrgModal(true)}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold px-5 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer shrink-0"
-          >
-            <FaPlus /> + Create New Organization
-          </button>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              onClick={handleClearDemoData}
+              className="bg-slate-800 hover:bg-rose-900/80 text-rose-300 border border-rose-800/50 text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-1.5 cursor-pointer shrink-0"
+              title="Wipe all demo organizations, tests, and mock users to start completely fresh"
+            >
+              <FaTrashAlt /> Clear Demo Data
+            </button>
+
+            <button
+              onClick={() => setShowCreateOrgModal(true)}
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold px-5 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <FaPlus /> + Create New Organization
+            </button>
+          </div>
         </div>
 
         {/* Organizations Table */}

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
         "DATABASE_URL", 
         "sqlite:///./intellihire.db"
     )
+    SEED_DEMO_DATA: bool = os.getenv("SEED_DEMO_DATA", "false").lower() == "true"
 
     class Config:
         env_file = ".env"

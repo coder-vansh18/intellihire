@@ -273,3 +273,52 @@ def assign_org_admin(
         total_students=students,
         total_tests=tests
     )
+
+@router.post("/clear-demo-data", response_model=dict)
+def clear_demo_data(
+    db: Session = Depends(get_session),
+    super_admin: User = Depends(verify_super_admin)
+):
+    """Wipes all demo/testing organizations, users, tests, and results, keeping ONLY the Super Admin account."""
+    from app.models import Question, QuestionAlert, QuizProgress, TestAssignment
+
+    # Delete all question alerts, results, quiz progresses, assignments, questions, tests
+    alerts = db.exec(select(QuestionAlert)).all()
+    for a in alerts:
+        db.delete(a)
+
+    results = db.exec(select(Result)).all()
+    for r in results:
+        db.delete(r)
+
+    progresses = db.exec(select(QuizProgress)).all()
+    for p in progresses:
+        db.delete(p)
+
+    assignments = db.exec(select(TestAssignment)).all()
+    for ta in assignments:
+        db.delete(ta)
+
+    questions = db.exec(select(Question)).all()
+    for q in questions:
+        db.delete(q)
+
+    tests = db.exec(select(Test)).all()
+    for t in tests:
+        db.delete(t)
+
+    # Delete all non-super-admin users
+    non_super_users = db.exec(select(User).where(User.role != "super_admin")).all()
+    for u in non_super_users:
+        db.delete(u)
+
+    # Delete all organizations
+    orgs = db.exec(select(Organization)).all()
+    for o in orgs:
+        db.delete(o)
+
+    db.commit()
+
+    return {
+        "message": "All demo organizations, users, tests, and score records cleared successfully! Database is completely clean for your manual institutional setup."
+    }
