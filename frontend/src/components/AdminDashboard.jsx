@@ -56,6 +56,15 @@ const AdminDashboard = () => {
     };
   };
 
+  const handleAuthError = () => {
+    showToast("Admin session expired. Please log in again.", "error");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setTimeout(() => {
+      setLocation("/login");
+    }, 1200);
+  };
+
   // 1. Fetch Dashboard Analytics & Data
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -68,9 +77,14 @@ const AdminDashboard = () => {
         fetch(`${API_URL}/api/qa-alerts`, { headers })
       ]);
 
-      if (analyticsRes.status === 401 || analyticsRes.status === 403) {
-        showToast("Admin session expired or access denied", "error");
-        setLocation("/login");
+      if (analyticsRes.status === 401 || usersRes.status === 401 || testsRes.status === 401) {
+        handleAuthError();
+        return;
+      }
+
+      if (analyticsRes.status === 403) {
+        showToast("Access denied: Organization Admin role required", "error");
+        setLocation("/");
         return;
       }
 
@@ -149,6 +163,11 @@ const AdminDashboard = () => {
         body: JSON.stringify(userFormData)
       });
 
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
+
       const data = await res.json();
       if (res.ok) {
         showToast(`User ${data.name} added successfully! 🚀`);
@@ -192,6 +211,11 @@ const AdminDashboard = () => {
         body: JSON.stringify(payload)
       });
 
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
+
       const data = await res.json();
       if (res.ok) {
         showToast(`User ${data.name} updated successfully! ✅`);
@@ -217,6 +241,11 @@ const AdminDashboard = () => {
         headers: getAuthHeaders()
       });
 
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
+
       const data = await res.json();
       if (res.ok) {
         showToast("User deleted successfully 🗑️");
@@ -237,6 +266,10 @@ const AdminDashboard = () => {
       const res = await fetch(`${API_URL}/api/admin/users/${userId}/report`, {
         headers: getAuthHeaders()
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       const data = await res.json();
       if (res.ok) {
         setSelectedStudentReport(data);
@@ -260,6 +293,10 @@ const AdminDashboard = () => {
         method: "DELETE",
         headers: getAuthHeaders()
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         showToast(`Assessment "${testTitle}" deleted 🗑️`);
         fetchDashboardData();
@@ -280,6 +317,10 @@ const AdminDashboard = () => {
         headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus })
       });
+      if (res.status === 401) {
+        handleAuthError();
+        return;
+      }
       if (res.ok) {
         setQaAlerts((prev) =>
           prev.map((a) => (a.id === alertId ? { ...a, status: newStatus } : a))

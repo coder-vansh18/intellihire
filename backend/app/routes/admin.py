@@ -154,6 +154,15 @@ def add_organization_user(
 
     # 1. Enforce Domain Validation for the Organization
     org = db.get(Organization, admin.organization_id) if admin.organization_id else None
+    if not org and admin.email and "@" in admin.email:
+        admin_domain = admin.email.split("@")[-1].lower()
+        org = db.exec(select(Organization).where(Organization.domain == admin_domain)).first()
+        if org and admin.organization_id is None:
+            admin.organization_id = org.id
+            db.add(admin)
+            db.commit()
+            db.refresh(admin)
+
     if org and org.domain:
         required_domain = org.domain.lower()
         if not clean_email.endswith(f"@{required_domain}") and not clean_email.endswith(f".{required_domain}"):
@@ -172,7 +181,7 @@ def add_organization_user(
         user_role = "student"
 
     new_user = User(
-        organization_id=admin.organization_id,
+        organization_id=admin.organization_id or (org.id if org else None),
         name=payload.name.strip(),
         email=clean_email,
         password_hash=hashed_pwd,

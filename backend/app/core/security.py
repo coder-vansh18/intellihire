@@ -53,7 +53,10 @@ def get_current_user(
         user_id = uuid.UUID(user_id_str)
         user = db.get(User, user_id)
         if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="Authentication session expired or user no longer exists. Please log in again."
+            )
         
         if user.session_id and str(user.session_id) != session_id_str:
             raise HTTPException(
