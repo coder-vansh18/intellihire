@@ -19,6 +19,8 @@ import AboutPage from './components/AboutPage';
 import CodingPage from "./components/CodingPage";
 import CodeEditor from "./pages/CodeEditor";
 import InfiniteQuiz from "./pages/InfiniteQuiz";
+import AdminDashboard from "./components/AdminDashboard";
+import SuperAdminDashboard from "./components/SuperAdminDashboard";
 
 function App() {
   return (
@@ -26,8 +28,13 @@ function App() {
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/login" component={LoginPage} />
-        <Route path="/signup" component={SignupPage} />
+        <Route path="/signup" component={LoginPage} />
+        <Route path="/super-admin-dashboard" component={SuperAdminDashboard} />
+        <Route path="/super_admin_dashboard" component={SuperAdminDashboard} />
+        <Route path="/admin-dashboard" component={AdminDashboard} />
+        <Route path="/admin_dashboard" component={AdminDashboard} />
         <Route path="/company-dashboard" component={CompanyDashboard} />
+        <Route path="/company_dashboard" component={CompanyDashboard} />
         <Route path="/create-test" component={CreateTest} />
         <Route path="/my-tests" component={MyTests} />
         <Route path="/results" component={StudentResults} />
@@ -48,4 +55,3 @@ function App() {
 }
 
 export default App;
-

@@ -3,16 +3,40 @@ import { Link, useLocation } from "wouter";
 import { FaUserCircle, FaPlusCircle, FaClipboardList, FaChartBar, FaGraduationCap, FaShieldAlt } from "react-icons/fa";
 
 const CompanyDashboard = () => {
-  const [user, setUser] = useState(null);
-  const [showMenu, setShowMenu] = useState(false);
   const [, setLocation] = useLocation();
+  const [showMenu, setShowMenu] = useState(false);
+
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored && stored !== "undefined" ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser && storedUser !== "undefined") {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem("token");
+
+    if (!token || !storedUser || storedUser === "undefined") {
+      setLocation("/login");
+      return;
     }
-  }, []);
+
+    try {
+      const u = JSON.parse(storedUser);
+      setUser(u);
+      if (u.role === "admin") {
+        setLocation("/admin-dashboard");
+      } else if (u.role === "student") {
+        setLocation("/");
+      }
+    } catch (err) {
+      console.error("Invalid user in CompanyDashboard:", err);
+      setLocation("/login");
+    }
+  }, [setLocation]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -25,13 +49,14 @@ const CompanyDashboard = () => {
       {/* 🔹 NAVBAR */}
       <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="text-2xl font-black text-primary">
-          <Link to="/">IntelliHire</Link>
+          <Link to="/company-dashboard">IntelliHire</Link>
         </div>
 
         <ul className="flex items-center space-x-6 list-none text-sm font-semibold text-slate-600">
-          <li><Link to="/company-dashboard" className="text-primary">Dashboard</Link></li>
-          <li><Link to="/my-tests" className="hover:text-primary">My Tests</Link></li>
-          <li><Link to="/results" className="hover:text-primary">Student Results</Link></li>
+          <li><Link to="/company-dashboard" className="text-primary font-bold">Dashboard</Link></li>
+          <li><Link to="/create-test" className="hover:text-primary transition">+ Create Test</Link></li>
+          <li><Link to="/my-tests" className="hover:text-primary transition">My Tests</Link></li>
+          <li><Link to="/results" className="hover:text-primary transition">Student Results</Link></li>
         </ul>
 
         {/* User Menu */}
@@ -40,7 +65,7 @@ const CompanyDashboard = () => {
             <>
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-primary focus:outline-none transition"
+                className="flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-primary focus:outline-none transition cursor-pointer"
                 title={user.name || "Profile"}
               >
                 <img
@@ -70,7 +95,7 @@ const CompanyDashboard = () => {
             </>
           ) : (
             <Link to="/login">
-              <button className="bg-primary hover:bg-indigo-600 text-white text-sm font-bold px-4 py-2 rounded-xl shadow transition">
+              <button className="bg-primary hover:bg-indigo-600 text-white text-sm font-bold px-4 py-2 rounded-xl shadow transition cursor-pointer">
                 Login / Signup
               </button>
             </Link>
@@ -98,42 +123,54 @@ const CompanyDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Create Test */}
           <Link to="/create-test">
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 cursor-pointer text-center group">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-primary flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition">
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition duration-200 border border-slate-100 text-center cursor-pointer group flex flex-col items-center justify-center min-h-[220px]">
+              <div className="w-16 h-16 bg-indigo-50 text-primary rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition">
                 <FaPlusCircle />
               </div>
-              <h2 className="text-lg font-bold text-slate-900 mb-1">Create Assessment</h2>
-              <p className="text-xs text-slate-500">Upload Excel question banks and set branch/year rules</p>
+              <h3 className="text-lg font-bold text-slate-800 group-hover:text-primary transition">
+                Create Assessment
+              </h3>
+              <p className="text-xs text-slate-500 mt-2 max-w-xs">
+                Upload Excel question banks and set branch/year rules
+              </p>
             </div>
           </Link>
 
-          {/* My Tests */}
+          {/* Manage Tests */}
           <Link to="/my-tests">
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 cursor-pointer text-center group">
-              <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition">
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition duration-200 border border-slate-100 text-center cursor-pointer group flex flex-col items-center justify-center min-h-[220px]">
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition">
                 <FaClipboardList />
               </div>
-              <h2 className="text-lg font-bold text-slate-900 mb-1">Manage Tests</h2>
-              <p className="text-xs text-slate-500">View created assessments and manage batch assignments</p>
+              <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition">
+                Manage Tests
+              </h3>
+              <p className="text-xs text-slate-500 mt-2 max-w-xs">
+                View created assessments and manage batch assignments
+              </p>
             </div>
           </Link>
 
           {/* Student Results */}
           <Link to="/results">
-            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition duration-300 cursor-pointer text-center group border-indigo-100 bg-gradient-to-b from-white to-indigo-50/20">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition">
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition duration-200 border border-slate-100 text-center cursor-pointer group flex flex-col items-center justify-center min-h-[220px]">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition">
                 <FaChartBar />
               </div>
-              <h2 className="text-lg font-bold text-slate-900 mb-1">Student Results & Logs</h2>
-              <p className="text-xs text-slate-500">Deep performance analytics, accuracy & anti-cheat logs</p>
+              <h3 className="text-lg font-bold text-slate-800 group-hover:text-emerald-600 transition">
+                Student Results & Logs
+              </h3>
+              <p className="text-xs text-slate-500 mt-2 max-w-xs">
+                Deep performance analytics, accuracy & anti-cheat logs
+              </p>
             </div>
           </Link>
         </div>
       </section>
 
       {/* 🔹 FOOTER */}
-      <footer className="bg-white border-t py-6 text-center text-xs text-slate-500">
-        <p>© 2026 IntelliHire Assessment Engine. All rights reserved.</p>
+      <footer className="text-center py-8 text-xs text-slate-400 border-t bg-white">
+        © 2026 IntelliHire Assessment Engine. All rights reserved.
       </footer>
     </div>
   );

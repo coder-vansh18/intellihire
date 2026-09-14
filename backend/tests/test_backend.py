@@ -29,17 +29,19 @@ def setup_db():
 
 def test_user_registration_and_single_session_login():
     with TestClient(app) as client:
+        # Public self-registration is closed in institutional model
         reg_response = client.post("/api/auth/register", json={
             "name": "Jane Student",
             "email": "jane@example.com",
             "password": "securepassword123",
             "role": "student"
         })
-        assert reg_response.status_code == 201
+        assert reg_response.status_code == 403
 
+        # Login with pre-seeded student account to test single-session JWT tracking
         login1 = client.post("/api/auth/login", json={
-            "email": "jane@example.com",
-            "password": "securepassword123"
+            "email": "student@intellihire.ai",
+            "password": "student123"
         })
         assert login1.status_code == 200
         token1 = login1.json()["token"]
@@ -48,8 +50,8 @@ def test_user_registration_and_single_session_login():
         assert me1.status_code == 200
 
         login2 = client.post("/api/auth/login", json={
-            "email": "jane@example.com",
-            "password": "securepassword123"
+            "email": "student@intellihire.ai",
+            "password": "student123"
         })
         assert login2.status_code == 200
         token2 = login2.json()["token"]

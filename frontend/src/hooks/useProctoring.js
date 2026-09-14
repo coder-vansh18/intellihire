@@ -16,6 +16,7 @@ export const useProctoring = (onSubmit, { maxWarnings = 3, enabled = true } = {}
   const onSubmitRef = useRef(onSubmit);
   const isSubmittedRef = useRef(false);
   const enabledRef = useRef(enabled);
+  const lastViolationTimeRef = useRef(0);
 
   useEffect(() => {
     onSubmitRef.current = onSubmit;
@@ -29,16 +30,29 @@ export const useProctoring = (onSubmit, { maxWarnings = 3, enabled = true } = {}
     }
   }, [enabled]);
 
-  // Tab switch violation trigger helper
+  const stopProctoring = useCallback(() => {
+    isSubmittedRef.current = true;
+    enabledRef.current = false;
+    setShowWarningModal(false);
+  }, []);
+
+  // Tab switch violation trigger helper (debounced with 2500ms cooldown)
   const triggerTabViolation = useCallback(() => {
     if (!enabledRef.current || isSubmittedRef.current) return;
+
+    const now = Date.now();
+    // Ignore events that occur within 2.5 seconds of each other (e.g. blur + visibilitychange on same tab switch)
+    if (now - lastViolationTimeRef.current < 2500) {
+      return;
+    }
+    lastViolationTimeRef.current = now;
 
     setWarningCount((prevCount) => {
       const nextCount = prevCount + 1;
 
       if (nextCount >= maxWarnings) {
         setIsDisqualified(true);
-        setWarningMessage(`🚨 Violation Limit Reached (${nextCount}/${maxWarnings})! Your assessment is being automatically submitted.`);
+        setWarningMessage(`🚨 Violation Limit Reached (${nextCount}/${maxWarnings})! Multiple tab-switch violations were recorded. Your assessment is being automatically submitted.`);
         setShowWarningModal(true);
 
         isSubmittedRef.current = true;
@@ -50,14 +64,14 @@ export const useProctoring = (onSubmit, { maxWarnings = 3, enabled = true } = {}
           });
         }
       } else {
-        setWarningMessage(`⚠️ Proctoring Warning: Tab switch / focus loss detected! (Violation ${nextCount}/${maxWarnings}). On the ${maxWarnings}rd violation, your test will be auto-submitted.`);
+        setWarningMessage(`⚠️ Proctoring Warning: Tab switch detected! (Violation ${nextCount}/${maxWarnings}). On the ${maxWarnings}rd violation, your test will be auto-submitted.`);
         setShowWarningModal(true);
       }
       return nextCount;
     });
   }, [maxWarnings]);
 
-  // Handle Tab Switch / Window Blur
+  // Handle Tab Switch via Visibility API (Primary authoritative source)
   const handleVisibilityChange = useCallback(() => {
     if (!enabledRef.current || isSubmittedRef.current) return;
     if (document.hidden) {
@@ -65,9 +79,9 @@ export const useProctoring = (onSubmit, { maxWarnings = 3, enabled = true } = {}
     }
   }, [triggerTabViolation]);
 
+  // Handle Window Blur (e.g. switching window/application)
   const handleWindowBlur = useCallback(() => {
     if (!enabledRef.current || isSubmittedRef.current) return;
-    // Window lost focus (user clicked outside or switched window)
     triggerTabViolation();
   }, [triggerTabViolation]);
 
@@ -142,7 +156,8 @@ export const useProctoring = (onSubmit, { maxWarnings = 3, enabled = true } = {}
     warningMessage,
     isDisqualified,
     dismissWarningModal,
-    enterFullscreen
+    enterFullscreen,
+    stopProctoring
   };
 };
 

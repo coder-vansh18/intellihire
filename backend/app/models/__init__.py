@@ -1,3 +1,5 @@
+from app.models.organization import Organization
+from app.models.password_reset import PasswordResetToken
 from app.models.user import User
 from app.models.test import Test
 from app.models.question import Question
@@ -8,6 +10,8 @@ from app.models.assignment import TestAssignment
 from app.models.qa_alert import QuestionAlert
 
 __all__ = [
+    "Organization",
+    "PasswordResetToken",
     "User", 
     "Test", 
     "Question", 

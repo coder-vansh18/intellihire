@@ -76,11 +76,11 @@ const QuizzesPage = () => {
       {/* Navbar */}
       <nav className="flex justify-between items-center px-6 py-4 bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-20 border-b border-gray-100">
         <div className="text-2xl font-black bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
-          <Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"}>IntelliHire</Link>
+          <Link to={user?.role === "admin" ? "/admin-dashboard" : user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"}>IntelliHire</Link>
         </div>
 
         <ul className="hidden md:flex space-x-8 list-none font-medium text-sm text-gray-600">
-          <li><Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"} className="hover:text-primary transition">Home</Link></li>
+          <li><Link to={user?.role === "admin" ? "/admin-dashboard" : user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"} className="hover:text-primary transition">Home</Link></li>
           <li><Link to="/quizzes" className="hover:text-primary transition font-bold text-primary">Quizzes</Link></li>
           <li><Link to="/placements" className="hover:text-primary transition">Placements</Link></li>
           <li><Link to="/resources" className="hover:text-primary transition">Resources</Link></li>
@@ -120,7 +120,7 @@ const QuizzesPage = () => {
                   </div>
                 </Link>
 
-                <Link to={user.role === "company" || user.role === "professor" ? "/company-dashboard" : "/dashboard"}>
+                <Link to={user?.role === "admin" ? "/admin-dashboard" : (user?.role === "company" || user?.role === "professor") ? "/company-dashboard" : "/dashboard"}>
                   <div className="px-4 py-2.5 hover:bg-gray-50 text-gray-700 text-sm font-medium cursor-pointer flex items-center gap-2">
                     <FaLaptop className="text-gray-400 text-xs" /> Dashboard
                   </div>

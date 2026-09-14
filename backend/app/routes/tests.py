@@ -119,6 +119,7 @@ def create_test(
             expires_at_dt = None
 
     test = Test(
+        organization_id=current_user.organization_id if current_user else None,
         title=payload.title,
         duration_minutes=payload.duration_minutes or 60,
         is_public=payload.is_public if payload.is_public is not None else False,
@@ -243,15 +244,22 @@ def get_all_tests(
                     Test.is_public == True,
                     Test.id.in_(assigned_test_ids)
                 )
-            ).order_by(Test.created_at.desc())
+            )
         else:
-            query = select(Test).where(Test.is_public == True).order_by(Test.created_at.desc())
+            query = select(Test).where(Test.is_public == True)
+
+        if current_user.organization_id:
+            query = query.where(or_(Test.organization_id == current_user.organization_id, Test.organization_id == None))
         
-        tests = db.exec(query).all()
+        tests = db.exec(query.order_by(Test.created_at.desc())).all()
         return [format_test_response(t, db, user_id) for t in tests]
 
-    # 2. Professors / Companies / Admins / General Management: View all created assessments
-    tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+    # 2. Professors / Companies / Admins: View assessments in their organization
+    query = select(Test).order_by(Test.created_at.desc())
+    if current_user and current_user.organization_id and current_user.role != "super_admin":
+        query = query.where(or_(Test.organization_id == current_user.organization_id, Test.organization_id == None))
+
+    tests = db.exec(query).all()
     return [format_test_response(t, db, user_id) for t in tests]
 
 @router.get("/tests/{id}", response_model=TestOut)
