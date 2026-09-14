@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   FaEdit, FaSave, FaUserGraduate, FaIdCard, FaBuilding, 
   FaCalendarAlt, FaLayerGroup, FaChalkboardTeacher, FaLaptop, 
-  FaPlusCircle, FaListAlt, FaChartBar, FaCheck, FaTimes, FaSignOutAlt 
+  FaPlusCircle, FaListAlt, FaChartBar, FaCheck, FaTimes, FaSignOutAlt, FaShieldAlt 
 } from 'react-icons/fa';
 import { Link, useLocation } from 'wouter';
 import { API_URL } from '../config';
@@ -13,15 +13,35 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
-  const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    role: 'student',
-    branch: '',
-    year: '',
-    section: '',
-    roll_number: '',
-    bio: ''
+  const [profile, setProfile] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored && stored !== "undefined") {
+        const u = JSON.parse(stored);
+        return {
+          name: u.name || '',
+          email: u.email || '',
+          role: u.role || 'student',
+          branch: u.branch || '',
+          year: u.year || '',
+          section: u.section || '',
+          roll_number: u.roll_number || '',
+          bio: u.bio || ''
+        };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return {
+      name: '',
+      email: '',
+      role: 'student',
+      branch: '',
+      year: '',
+      section: '',
+      roll_number: '',
+      bio: ''
+    };
   });
 
   const showToast = (msg, type = "success") => {
@@ -29,29 +49,18 @@ const ProfilePage = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const isSuperAdmin = profile.role === 'super_admin';
+  const isAdmin = profile.role === 'admin';
   const isProfessor = profile.role === 'company' || profile.role === 'professor';
 
   // Fetch current user details on load
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       const token = localStorage.getItem("token");
-
-      if (storedUser && storedUser.email) {
-        setProfile({
-          name: storedUser.name || '',
-          email: storedUser.email || '',
-          role: storedUser.role || 'student',
-          branch: storedUser.branch || '',
-          year: storedUser.year || '',
-          section: storedUser.section || '',
-          roll_number: storedUser.roll_number || '',
-          bio: storedUser.bio || ''
-        });
-      }
 
       if (token) {
         try {
+          const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
           const res = await fetch(`${API_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -153,11 +162,21 @@ const ProfilePage = () => {
       {/* Role-Specific Dynamic Navbar */}
       <nav className="flex justify-between items-center px-6 py-4 bg-white/95 backdrop-blur-md shadow-md sticky top-0 z-20 border-b border-gray-100">
         <div className="text-2xl font-black bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
-          <Link to={isProfessor ? "/company-dashboard" : "/"}>IntelliHire</Link>
+          <Link to={isSuperAdmin ? "/super-admin-dashboard" : isAdmin ? "/admin-dashboard" : isProfessor ? "/company-dashboard" : "/"}>IntelliHire</Link>
         </div>
 
-        {/* Professor Navigation Menu */}
-        {isProfessor ? (
+        {/* Dynamic Navigation Menu by Role */}
+        {isSuperAdmin ? (
+          <ul className="hidden md:flex space-x-6 list-none font-medium text-sm text-gray-600">
+            <li><Link to="/super-admin-dashboard" className="hover:text-primary transition font-bold">Institutions & Orgs</Link></li>
+            <li><Link to="/profile" className="hover:text-primary transition font-bold text-primary">Super Admin Profile</Link></li>
+          </ul>
+        ) : isAdmin ? (
+          <ul className="hidden md:flex space-x-6 list-none font-medium text-sm text-gray-600">
+            <li><Link to="/admin-dashboard" className="hover:text-primary transition font-bold">Admin Dashboard</Link></li>
+            <li><Link to="/profile" className="hover:text-primary transition font-bold text-primary">Admin Profile</Link></li>
+          </ul>
+        ) : isProfessor ? (
           <ul className="hidden md:flex space-x-6 list-none font-medium text-sm text-gray-600">
             <li><Link to="/company-dashboard" className="hover:text-primary transition">Dashboard</Link></li>
             <li><Link to="/create-test" className="hover:text-primary transition">+ Create Test</Link></li>
@@ -200,17 +219,21 @@ const ProfilePage = () => {
               }}
             />
             <div>
-              <h2 className="text-2xl font-black text-gray-900">{profile.name || (isProfessor ? "Professor Name" : "Student Name")}</h2>
+              <h2 className="text-2xl font-black text-gray-900">{profile.name || (isSuperAdmin ? "Super Admin" : isProfessor ? "Professor Name" : "Student Name")}</h2>
               <p className="text-sm text-gray-500 font-medium">{profile.email}</p>
               
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm ${
-                  isProfessor 
+                  isSuperAdmin
+                    ? "bg-amber-100 text-amber-900 border border-amber-300"
+                    : isAdmin
+                    ? "bg-rose-100 text-rose-800 border border-rose-200"
+                    : isProfessor 
                     ? "bg-purple-100 text-purple-800 border border-purple-200" 
                     : "bg-indigo-100 text-indigo-800 border border-indigo-200"
                 }`}>
-                  {isProfessor ? <FaChalkboardTeacher /> : <FaUserGraduate />}
-                  <span>{isProfessor ? "Professor / Recruiter" : "Student"}</span>
+                  {isSuperAdmin ? <FaShieldAlt className="text-amber-600" /> : isAdmin ? <FaShieldAlt /> : isProfessor ? <FaChalkboardTeacher /> : <FaUserGraduate />}
+                  <span>{isSuperAdmin ? "Platform Super Administrator" : isAdmin ? "Organization Administrator" : isProfessor ? "Professor / Recruiter" : "Student"}</span>
                 </span>
 
                 {profile.branch && (
@@ -235,9 +258,9 @@ const ProfilePage = () => {
           </div>
 
           {/* Quick Action Pill Button */}
-          <Link to={isProfessor ? "/company-dashboard" : "/dashboard"}>
+          <Link to={isSuperAdmin ? "/super-admin-dashboard" : isAdmin ? "/admin-dashboard" : isProfessor ? "/company-dashboard" : "/dashboard"}>
             <button className="bg-gradient-to-r from-primary to-indigo-600 hover:opacity-95 text-white text-xs font-bold px-5 py-2.5 rounded-2xl shadow-md transition flex items-center gap-2 cursor-pointer">
-              <FaLaptop /> {isProfessor ? "Professor Dashboard" : "Student Dashboard"}
+              <FaLaptop /> {isSuperAdmin ? "Super Admin Portal" : isAdmin ? "Admin Dashboard" : isProfessor ? "Professor Dashboard" : "Student Dashboard"}
             </button>
           </Link>
         </div>

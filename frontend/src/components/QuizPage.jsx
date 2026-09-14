@@ -23,6 +23,7 @@ const QuizPage = () => {
   const [finalScore, setFinalScore] = useState(0);
   const [disqualified, setDisqualified] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
 
   // 🚩 QA Alert Modal States
   const [qaModalOpen, setQaModalOpen] = useState(false);
@@ -75,8 +76,15 @@ const QuizPage = () => {
     return score;
   }, [questions]);
 
+  const stopProctoringRef = useRef(null);
+
   // Submit Quiz Callback
   const submitQuiz = useCallback(async (proctorData = {}) => {
+    if (stopProctoringRef.current) {
+      stopProctoringRef.current();
+    }
+    setShowSubmitConfirmModal(false);
+
     const rawUser = JSON.parse(localStorage.getItem("user") || "{}");
     const token = localStorage.getItem("token");
 
@@ -132,11 +140,16 @@ const QuizPage = () => {
     showWarningModal,
     warningMessage,
     dismissWarningModal,
-    enterFullscreen
+    enterFullscreen,
+    stopProctoring
   } = useProctoring(submitQuiz, { 
     maxWarnings: 3, 
     enabled: !showResult 
   });
+
+  useEffect(() => {
+    stopProctoringRef.current = stopProctoring;
+  }, [stopProctoring]);
 
   // 1. FETCH / START TEST SESSION (Runs ONCE per testId)
   useEffect(() => {
@@ -645,11 +658,7 @@ const QuizPage = () => {
               {/* Final Submit Button */}
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm("Are you sure you want to submit your assessment?")) {
-                    submitQuiz({ tab_switches: tabSwitches });
-                  }
-                }}
+                onClick={() => setShowSubmitConfirmModal(true)}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition text-base cursor-pointer"
               >
                 Submit Assessment
@@ -811,6 +820,66 @@ const QuizPage = () => {
           </div>
         </div>
       </div>
+
+      {/* 🚀 In-App Submit Confirmation Modal */}
+      {showSubmitConfirmModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 text-gray-800 border border-gray-100">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-inner">
+                <FaCheck />
+              </div>
+              <h3 className="text-xl font-black text-gray-900">Submit Assessment?</h3>
+              <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                Please review your progress before finalizing your submission. Once submitted, you cannot change your answers.
+              </p>
+            </div>
+
+            {/* Live Progress Summary Grid */}
+            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-gray-200 text-xs">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50 border border-emerald-100">
+                <span className="font-bold text-emerald-800">Answered:</span>
+                <span className="font-black text-emerald-700 text-sm">{statusCounts.answered} / {questions.length}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-xl bg-rose-50 border border-rose-100">
+                <span className="font-bold text-rose-800">Unanswered:</span>
+                <span className="font-black text-rose-700 text-sm">{statusCounts.unanswered}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50 border border-amber-100">
+                <span className="font-bold text-amber-800">Review Flagged:</span>
+                <span className="font-black text-amber-700 text-sm">{statusCounts.marked}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-xl bg-indigo-50 border border-indigo-100">
+                <span className="font-bold text-indigo-800">Tab Warnings:</span>
+                <span className={`font-black text-sm ${warningCount >= 2 ? "text-rose-600" : "text-indigo-700"}`}>
+                  {warningCount} / 3
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSubmitConfirmModal(false)}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold text-xs cursor-pointer transition"
+              >
+                Keep Answering
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (stopProctoringRef.current) stopProctoringRef.current();
+                  submitQuiz({ tab_switches: tabSwitches });
+                }}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white py-3 rounded-xl font-bold text-xs shadow-lg transition cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                Confirm & Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

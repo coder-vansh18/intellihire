@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'wouter';
 import React, { useState } from 'react';
 import { API_URL } from "../config";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 const steps = ['Choose role', 'Sign in', 'Done'];
 
@@ -12,6 +13,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -57,7 +59,12 @@ const LoginPage = () => {
       setStep(3);
       
       setTimeout(() => {
-        if (userType === 'company' || userType === 'professor') {
+        const effectiveRole = data.user.role || userType;
+        if (effectiveRole === 'super_admin') {
+          setLocation('/super-admin-dashboard');
+        } else if (effectiveRole === 'admin') {
+          setLocation('/admin-dashboard');
+        } else if (effectiveRole === 'company' || effectiveRole === 'professor') {
           setLocation('/company-dashboard');
         } else {
           setLocation('/');
@@ -130,7 +137,7 @@ const LoginPage = () => {
                   {
                     key: 'student',
                     label: 'Student',
-                    desc: 'Looking for internships or placement tests',
+                    desc: 'Looking for internships, placement tests & practice assessments',
                     icon: (
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
@@ -139,11 +146,31 @@ const LoginPage = () => {
                   },
                   {
                     key: 'company',
-                    label: 'Company / Professor',
-                    desc: 'Hiring talent or assigning campus assessments',
+                    label: 'College Professor / Recruiter',
+                    desc: 'Create and assign tests, oversee student submissions',
                     icon: (
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: 'admin',
+                    label: 'Organization Admin',
+                    desc: 'Manage college faculty, student domain accounts & assessments',
+                    icon: (
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: 'super_admin',
+                    label: 'Platform Super Admin',
+                    desc: 'Manage institutions, onboard colleges & provision organization admins',
+                    icon: (
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10h2v4h-2zm0 5h2v2h-2z"/>
                       </svg>
                     ),
                   },
@@ -180,7 +207,15 @@ const LoginPage = () => {
             <div>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white flex-shrink-0">
-                  {userType === 'student' ? (
+                  {userType === 'super_admin' ? (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10h2v4h-2zm0 5h2v2h-2z"/>
+                    </svg>
+                  ) : userType === 'admin' ? (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                    </svg>
+                  ) : userType === 'student' ? (
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                     </svg>
@@ -192,7 +227,7 @@ const LoginPage = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 leading-tight">
-                    Sign in as {userType === 'student' ? 'Student' : 'Company / Professor'}
+                    Sign in as {userType === 'super_admin' ? 'Super Admin' : userType === 'admin' ? 'Organization Admin' : userType === 'company' || userType === 'professor' ? 'Professor / Recruiter' : 'Student'}
                   </h2>
                   <button
                     type="button"
@@ -209,7 +244,7 @@ const LoginPage = () => {
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Email address</label>
                   <input
                     type="email" name="email" value={formData.email}
-                    onChange={handleInputChange} placeholder="you@example.com"
+                    onChange={handleInputChange} placeholder="e.g. b241187@skit.ac.in"
                     className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition"
                     required autoFocus
                   />
@@ -218,7 +253,13 @@ const LoginPage = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label className="text-xs font-medium text-gray-500">Password</label>
-                    <Link to="/forgot-password" className="text-xs text-indigo-500 hover:underline">Forgot password?</Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotModal(true)}
+                      className="text-xs text-indigo-500 hover:underline font-medium"
+                    >
+                      Forgot / Reset Password?
+                    </button>
                   </div>
                   <div className="relative">
                     <input
@@ -298,14 +339,19 @@ const LoginPage = () => {
         {step < 3 && (
           <div className="border-t border-gray-100 px-8 py-4 bg-gray-50 text-center">
             <p className="text-xs text-gray-500">
-              No account yet?{' '}
-              <Link to="/signup" className="text-indigo-600 font-medium hover:underline">Create one free</Link>
+              <span className="font-semibold text-gray-700">Institutional Access Only:</span> Contact your college administrator for your official credentials.
               {' · '}
-              <Link to="/" className="text-gray-400 hover:underline">Back to home</Link>
+              <Link to="/" className="text-indigo-600 hover:underline">Back to home</Link>
             </p>
           </div>
         )}
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal 
+        isOpen={showForgotModal} 
+        onClose={() => setShowForgotModal(false)} 
+      />
     </div>
   );
 };

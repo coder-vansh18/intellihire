@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.session import create_db_and_tables
-from app.routes import auth, tests, quiz, results
+from app.routes import auth, tests, quiz, results, admin, super_admin
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -35,3 +35,5 @@ app.include_router(auth.router)
 app.include_router(tests.router)
 app.include_router(quiz.router)
 app.include_router(results.router)
+app.include_router(admin.router)
+app.include_router(super_admin.router)

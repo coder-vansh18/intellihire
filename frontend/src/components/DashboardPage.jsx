@@ -9,8 +9,16 @@ const DashboardPage = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
     setUser(storedUser);
+
+    if (storedUser?.role === "admin") {
+      window.location.replace("/admin-dashboard");
+      return;
+    } else if (storedUser?.role === "company" || storedUser?.role === "professor") {
+      window.location.replace("/company-dashboard");
+      return;
+    }
 
     const userId = storedUser?.id || storedUser?._id;
     if (userId) {
@@ -83,11 +91,11 @@ const DashboardPage = () => {
       {/* Navbar */}
       <nav className="flex justify-between items-center p-4 bg-white bg-opacity-90 shadow-md sticky top-0 z-10">
         <div className="text-2xl font-bold text-primary">
-          <Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"}>IntelliHire</Link>
+          <Link to={user?.role === "admin" ? "/admin-dashboard" : (user?.role === "company" || user?.role === "professor") ? "/company-dashboard" : "/"}>IntelliHire</Link>
         </div>
 
         <ul className="flex space-x-8 list-none">
-          <li><Link to={user && (user.role === "company" || user.role === "professor") ? "/company-dashboard" : "/"}>Home</Link></li>
+          <li><Link to={user?.role === "admin" ? "/admin-dashboard" : (user?.role === "company" || user?.role === "professor") ? "/company-dashboard" : "/"}>Home</Link></li>
           <li><Link to="/quizzes">Quizzes</Link></li>
           <li><Link to="/placements">Placements</Link></li>
           <li><Link to="/resources">Resources</Link></li>

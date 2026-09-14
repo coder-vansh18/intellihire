@@ -19,7 +19,11 @@ const HomePage = () => {
       try {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
-        if (parsed && (parsed.role === "company" || parsed.role === "professor")) {
+        if (parsed && parsed.role === "super_admin") {
+          window.location.replace("/super-admin-dashboard");
+        } else if (parsed && parsed.role === "admin") {
+          window.location.replace("/admin-dashboard");
+        } else if (parsed && (parsed.role === "company" || parsed.role === "professor")) {
           window.location.replace("/company-dashboard");
         }
       } catch (err) {
