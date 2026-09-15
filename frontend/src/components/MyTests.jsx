@@ -63,13 +63,16 @@ const MyTests = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this test?")) return;
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${API_URL}/api/tests/${id}`, {
         method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       if (res.ok) {
         setTests(tests.filter((t) => (t._id || t.id) !== id));
       } else {
-        alert("Failed to delete test");
+        const data = await res.json().catch(() => ({}));
+        alert(data.detail || "Failed to delete test");
       }
     } catch (err) {
       console.error("Error deleting test", err);

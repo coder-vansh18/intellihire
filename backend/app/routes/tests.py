@@ -200,8 +200,19 @@ def get_my_tests_management(
     db: Session = Depends(get_session),
     current_user: Optional[User] = Depends(get_current_user)
 ):
-    """Dedicated endpoint for professors and managers to view all created assessments"""
-    tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+    """Dedicated endpoint for professors and managers to view their own created assessments"""
+    if not current_user:
+        return []
+
+    if current_user.role == "super_admin":
+        tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+    else:
+        tests = db.exec(
+            select(Test)
+            .where(Test.created_by_id == current_user.id)
+            .order_by(Test.created_at.desc())
+        ).all()
+
     user_id = current_user.id if current_user else None
     return [format_test_response(t, db, user_id) for t in tests]
 
@@ -213,9 +224,23 @@ def get_all_tests(
 ):
     user_id = current_user.id if current_user else None
 
-    # If explicitly requested in management mode, return all tests
+    # If explicitly requested in management mode, return assessments scoped to user
     if mode == "manage":
-        tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+        if not current_user:
+            return []
+        if current_user.role == "super_admin":
+            tests = db.exec(select(Test).order_by(Test.created_at.desc())).all()
+        elif current_user.role == "admin":
+            query = select(Test).order_by(Test.created_at.desc())
+            if current_user.organization_id:
+                query = query.where(Test.organization_id == current_user.organization_id)
+            tests = db.exec(query).all()
+        else:
+            tests = db.exec(
+                select(Test)
+                .where(Test.created_by_id == current_user.id)
+                .order_by(Test.created_at.desc())
+            ).all()
         return [format_test_response(t, db, user_id) for t in tests]
 
     # 1. Student Role: View Public Practice Tests + Tests specifically assigned to Student's Branch/Year/Section/Batch
@@ -282,7 +307,11 @@ def get_test(
 
 @router.delete("/tests/{id}")
 @router.delete("/test/{id}")
-def delete_test(id: str, db: Session = Depends(get_session)):
+def delete_test(
+    id: str, 
+    db: Session = Depends(get_session),
+    current_user: Optional[User] = Depends(get_current_user)
+):
     try:
         test_uuid = uuid.UUID(id)
     except ValueError:
@@ -291,6 +320,10 @@ def delete_test(id: str, db: Session = Depends(get_session)):
     test = db.get(Test, test_uuid)
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
+
+    if current_user and current_user.role not in ["super_admin", "admin"]:
+        if test.created_by_id and test.created_by_id != current_user.id:
+            raise HTTPException(status_code=403, detail="You can only delete assessments created by you")
     
     # Clean up associated records
     results = db.exec(select(Result).where(Result.test_id == test.id)).all()
