@@ -79,6 +79,37 @@ def format_test_response(
                 "submitted_at": result_record.created_at.isoformat()
             }
 
+    # Creator information, Total Attempts, and Leaderboard Toppers
+    creator_name = None
+    creator_email = None
+    total_attempts = 0
+    toppers = []
+
+    if db:
+        if test.created_by_id:
+            creator = db.get(User, test.created_by_id)
+            if creator:
+                creator_name = creator.name
+                creator_email = creator.email
+
+        all_results = db.exec(
+            select(Result)
+            .where(Result.test_id == test.id)
+            .order_by(Result.score.desc(), Result.duration_seconds.asc())
+        ).all()
+        total_attempts = len(all_results)
+
+        for r in all_results[:10]:
+            student = db.get(User, r.user_id) if r.user_id else None
+            toppers.append({
+                "name": student.name if student else (r.user_name or "Student"),
+                "email": student.email if student else None,
+                "score": r.score,
+                "total": r.total,
+                "accuracy": round((r.score / r.total) * 100) if r.total else 0,
+                "disqualified": bool(r.disqualified)
+            })
+
     return TestOut(
         id=str(test.id),
         _id=str(test.id),
@@ -92,7 +123,11 @@ def format_test_response(
         qa_alerts_count=qa_count,
         questions=questions_out,
         createdAt=test.created_at.isoformat(),
-        assignments=assignments_out
+        assignments=assignments_out,
+        creator_name=creator_name,
+        creator_email=creator_email,
+        total_attempts=total_attempts,
+        toppers=toppers
     )
 
 @router.post("/tests", response_model=dict, status_code=201)

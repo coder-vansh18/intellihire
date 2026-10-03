@@ -39,6 +39,10 @@ class TestOut(BaseModel):
     questions: List[QuestionOut]
     createdAt: str
     assignments: Optional[List[Dict[str, Any]]] = []
+    creator_name: Optional[str] = None
+    creator_email: Optional[str] = None
+    total_attempts: Optional[int] = 0
+    toppers: Optional[List[Dict[str, Any]]] = []
 
 class TestAssignPayload(BaseModel):
     user_id: Optional[str] = None # Individual assignment
